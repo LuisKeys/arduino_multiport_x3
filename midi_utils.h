@@ -9,54 +9,41 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 #define PITCHBEND 0b1110
 #define CONTROLCHANGE 0b1011
 
-void handleNoteOn(byte channel, byte pitch, byte velocity) {
-  byte cmd = NOTEON * 16 + 0;
+void sendMidiMessage(byte command, byte channel, byte value1, byte value2) {
+  byte cmd = command * 16 + 0;
   
   if(channel > 0 && channel <= 5) {
     turnOnLed(PORT_1);
     Serial1.write(cmd);
-    Serial1.write(pitch);
-    Serial1.write(velocity);
+    Serial1.write(value1);
+    Serial1.write(value2);
   }
 
   if(channel > 5 && channel <= 10) {
     turnOnLed(PORT_2);
     Serial2.write(cmd);
-    Serial2.write(pitch);
-    Serial2.write(velocity);
+    Serial2.write(value1);
+    Serial2.write(value2);
   }
 
   if(channel > 10 && channel <= 16) {
     turnOnLed(PORT_3);
     Serial3.write(cmd);
-    Serial3.write(pitch);
-    Serial3.write(velocity);
+    Serial3.write(value1);
+    Serial3.write(value2);
   }
 }
 
+void handleControlChange(byte channel, byte number, byte value) {
+  sendMidiMessage(CONTROLCHANGE, channel, number, value);
+}
+
+void handleNoteOn(byte channel, byte pitch, byte velocity) {
+  sendMidiMessage(NOTEON, channel, pitch, velocity);
+}
+
 void handleNoteOff(byte channel, byte pitch, byte velocity) {
-  byte cmd = NOTEOFF * 16 + 0;
-  
-  if(channel > 0 && channel <= 5) {
-    turnOnLed(PORT_1);
-    Serial1.write(cmd);
-    Serial1.write(pitch);
-    Serial1.write(velocity);
-  }
-
-  if(channel > 5 && channel <= 10) {
-    turnOnLed(PORT_2);
-    Serial2.write(cmd);
-    Serial2.write(pitch);
-    Serial2.write(velocity);
-  }
-
-  if(channel > 10 && channel <= 16) {
-    turnOnLed(PORT_3);
-    Serial3.write(cmd);
-    Serial3.write(pitch);
-    Serial3.write(velocity);
-  }
+  sendMidiMessage(NOTEOFF, channel, pitch, velocity);
 }
 
 void initSystem() {  
@@ -75,6 +62,7 @@ void initSystem() {
   
   while (!Serial) { delay(50);}  
 
+  MIDI.setHandleControlChange(handleControlChange);
   MIDI.setHandleNoteOn(handleNoteOn);
   MIDI.setHandleNoteOff(handleNoteOff);
   
