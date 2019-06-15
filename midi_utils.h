@@ -9,6 +9,7 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 #define PITCHBEND 0b1110
 #define CONTROLCHANGE 0b1011
 
+#define TIMECODEQUARTEFRAME 0xF1
 #define SONGPOSITION 0xF2
 #define SONGSELECT 0xF3
 #define CLOCK 0xF8
@@ -41,20 +42,43 @@ void sendMidiMessage(byte command, byte channel, byte value1, byte value2) {
   }
 }
 
-void sendMidiShortMessage(byte command, byte channel, byte value) {
+void sendShortChannelMidiMessage(byte command, byte channel, byte value) {
   byte cmd = command * 16 + 0;
   
-  if(channel > 0 && channel <= 5 || channel > 16) {
+  if(channel > 0 && channel <= 5) {
     turnOnLed(PORT_1);
+    Serial1.write(cmd);
+    Serial1.write(value);
   }
 
-  if(channel > 5 && channel <= 10 || channel > 16) {
+  if(channel > 5 && channel <= 10) {
     turnOnLed(PORT_2);
+    Serial2.write(cmd);
+    Serial2.write(value);
   }
 
-  if(channel > 10 && channel <= 16 || channel > 16) {
+  if(channel > 10 && channel <= 16) {
     turnOnLed(PORT_3);
+    Serial3.write(cmd);
+    Serial3.write(value);
   }
+}
+
+void sendMidiShortMessage(byte command, byte value) {
+  byte cmd = command * 16 + 0;
+  
+  Serial1.write(cmd);
+  Serial1.write(value);
+
+  Serial2.write(cmd);
+  Serial2.write(value);
+  
+  Serial3.write(cmd);
+  Serial3.write(value);
+  
+  turnOnLed(PORT_1);
+  turnOnLed(PORT_2);
+  turnOnLed(PORT_3);
 }
 
 void sendMidiClockMessage(byte cmd) {
@@ -83,11 +107,11 @@ void handleAfterTouchPoly(byte channel, byte note, byte pressure) {
 }
 
 void handleProgramChange(byte channel, byte number) {
-  sendMidiShortMessage(PROGRAMCHANGE, channel, number);
+  sendShortChannelMidiMessage(PROGRAMCHANGE, channel, number);
 }
 
 void handleAfterTouchChannel(byte channel, byte pressure) {
-  sendMidiShortMessage(MONOPRESSURE, channel, pressure);
+  sendShortChannelMidiMessage(MONOPRESSURE, channel, pressure);
 }
 
 void handlePitchBend(byte channel, int bend) {
@@ -95,7 +119,7 @@ void handlePitchBend(byte channel, int bend) {
 }
 
 void handleTimeCodeQuarterFrame(byte data) {
-  sendMidiShortMessage(0, 100, data);
+  sendMidiShortMessage(TIMECODEQUARTEFRAME, data);
 }
 
 void handleSongPosition(unsigned int beats) {
@@ -103,7 +127,7 @@ void handleSongPosition(unsigned int beats) {
 }
 
 void handleSongSelect(byte songnumber) {
-  sendMidiShortMessage(SONGSELECT, 100, songnumber);
+  sendMidiShortMessage(SONGSELECT, songnumber);
 }
 
 void handleClock(void) {
